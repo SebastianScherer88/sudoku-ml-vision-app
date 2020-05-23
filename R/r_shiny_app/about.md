@@ -8,6 +8,21 @@ For feedback or suggestions on how to improve this app, please reach out: schere
 
 ## About this app
 
+### Usage
+
+You can start inputting values into the grid just below the line that says `Inputs` on the left hand side.
+
+Once you're happy with the initial values, click the `Solve!` button.
+
+If solvable, the solution will appear on the right hand side just below the `Solution` line.
+
+To clear both inputs and solution, click the `Clear` button.
+
+Please note that on your mobile, the
+- `Solve!` and `Clear` button might appear at the very top of your screen
+- the `Inputs` will appear just below that
+- and the `Solution` section might have moved all the way down - you might have to scroll down to see it!
+
 ### Hosting
 
 The GUI (Graphic User Interface) you are seeing in front of you was written with R package [shiny](https://shiny.rstudio.com/). At the time of writing, it is hosted on one of the smaller AWS machines via the community editions of [Rstudio server](https://rstudio.com/products/rstudio/download-server/) and [R shiny server](https://rstudio.com/products/shiny/shiny-server/).
