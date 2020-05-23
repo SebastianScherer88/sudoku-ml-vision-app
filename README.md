@@ -2,7 +2,7 @@
 
 Hello there, and thanks for checking out this project!
 
-This repo contains all the code (and some instructions on the hosting setup) for a [remotely AWS hosted sudoku solving API](http://ec2-35-176-224-97.eu-west-2.compute.amazonaws.com/shiny/rstudio/sudoku_solver/) written in Python and R.
+This repo contains all the code (and some instructions on the hosting setup) for a [**remotely AWS hosted sudoku solving API**](http://ec2-35-176-224-97.eu-west-2.compute.amazonaws.com/shiny/rstudio/sudoku_solver/) written in Python and R.
 
 It is exposed to a URL (which sadly changes everytime the AWS server restarts) which the user can then access via their webbrowser. The user will then see a GUI that allows him/her to input initial values of a the classic sudoku problem.
 
