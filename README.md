@@ -30,4 +30,4 @@ Specifically, the repo contains the code for
 - the Python & FastAPI + pulp backend that solves a given sudoku (if possible)
 - some experimental Python + tensorflow code, back when I was trying to add a sudoku image recognition step to the frontend - maybe I will add that later :)
 
-A more precise summary of the sources used to setup the AWS server, RStudio and Rshiny used for hosting, please have a look at [this file](./R/r_shiny_app/about.md).
+For a more detailed summary of the sources used to setup the AWS server, RStudio and Rshiny used for hosting, please have a look at [this file](./R/r_shiny_app/about.md).

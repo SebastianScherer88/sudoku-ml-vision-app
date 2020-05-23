@@ -43,4 +43,4 @@ A great post to get started with R shiny on AWS is [this one by Jonas Schroeder]
 
 #### Mixed integer programming
 
-The solving of a sudoku given appropriate initial values is a mixed integer programming problem. A there's a [great post by Allison Morgan](https://towardsdatascience.com/using-integer-linear-programming-to-solve-sudoku-puzzles-15e9d2a70baa) on how to implement a solution in python using the [pulp library](https://coin-or.github.io/pulp/). That code, only slightly amended, is used to solve the sudoku problem given by the user.
+The solving of a sudoku given appropriate initial values is a mixed integer programming problem. There's a [great post by Allison Morgan](https://towardsdatascience.com/using-integer-linear-programming-to-solve-sudoku-puzzles-15e9d2a70baa) on how to implement a solution in python using the [pulp library](https://coin-or.github.io/pulp/). That code, only slightly amended, is used to solve the sudoku problem given by the user.
