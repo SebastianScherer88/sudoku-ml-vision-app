@@ -1,6 +1,6 @@
 ## About me
 
-I'm Sebastian Scherer. I'm working as a Data Scientist, but in my free time I enjoy doing small (or not so small) coding projects like this one.
+Hello there! My name is Sebastian Scherer, and I'm working as a Data Scientist, but in my free time I enjoy doing small (or not so small) coding projects like this one.
 
 If you like, please [stop by my Github](https://github.com/SebastianScherer88/) and check out some of my other content - there's even a playable Star Wars game in there!
 
