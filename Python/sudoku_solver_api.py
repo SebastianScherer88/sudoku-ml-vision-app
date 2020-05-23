@@ -42,12 +42,12 @@ class InitialValueConstraint(BaseModel):
     
 class InitialValueConstraints(BaseModel):
     
-    initial_values: List[InitialValueConstraint]
+    initial_values: List[InitialValueConstraint] = []
     
 class SudokuSolution(BaseModel):
     
     solved: int
-    solution: List[List[int]] # outer lists are rows, inner lists are column indices
+    solution: List[List[int]] = None # outer lists are rows, inner lists are column indices
     
     @validator('solved')
     def check_solution_status(cls,v):
@@ -58,18 +58,21 @@ class SudokuSolution(BaseModel):
             
     @validator('solution')
     def check_solved_grid(cls,v):
-               
-        if len(v) != 9:
-            raise ValueError('Solution grid must have 9 rows.')
-            
-        for r in v:
-            if len(r) != 9:
-                raise ValueError('Solution grid must have 9 columns.')
+        
+        if v != None:
+            if len(v) != 9:
+                raise ValueError('Solution grid must have 9 rows.')
                 
-            for d in r:
-                if d not in (1,2,3,4,5,6,7,8,9):
-                    raise ValueError('Solution must contain integers in [1,9] only.')
+            for r in v:
+                if len(r) != 9:
+                    raise ValueError('Solution grid must have 9 columns.')
                     
+                for d in r:
+                    if d not in (1,2,3,4,5,6,7,8,9):
+                        raise ValueError('Solution must contain integers in [1,9] only.')
+        else:
+            pass
+                        
         return v
                     
 # =============================================================================
@@ -99,7 +102,7 @@ def root():
     return {'message':'Hello World!'}
 
 @app.post('/solve', response_model = SudokuSolution)
-def solve_sudoku(initial_value_constraints: InitialValueConstraints = None):
+def solve_sudoku(initial_value_constraints: InitialValueConstraints):
     
     # --- set up Sudoku problem
     # The Vals, Rows and Cols sequences all follow this form
@@ -139,7 +142,7 @@ def solve_sudoku(initial_value_constraints: InitialValueConstraints = None):
             prob += lpSum([choices[v][r][c] for (r,c) in b]) == 1,""
 
     # add initial values if needed
-    if initial_value_constraints != None:
+    if initial_value_constraints != None and len(initial_value_constraints.initial_values) != 0:
         for initial_value_constraint in initial_value_constraints.initial_values:
             prob += choices[initial_value_constraint.value][initial_value_constraint.row_index][initial_value_constraint.column_index] == 1,""
             

@@ -2,6 +2,7 @@
 library(shiny)
 library(shinythemes)
 library(shinyMatrix)
+library(DT)
 
 ui <- navbarPage(
   "Sudoku Solver",
@@ -22,20 +23,24 @@ ui <- navbarPage(
         fluidRow(
           column(width = 5,
                  h3('Inputs'),
-          matrixInput('initial_grid',
-                      value = matrix(data = 1:81,
-                                     nrow = 9,
-                                     ncol = 9))),
+                 h5('Please enter the initial values (1-9) of the sudoku you want to solve.'),
+                 matrixInput('initial_grid',
+                             value = matrix(data = NA,
+                                            nrow = 9,
+                                            ncol = 9),
+                             class = 'character')),
           column(width = 1,
-                  h3('')),
+                 h3('')),
           column(width = 5,
-                 h3('Solution'))
+                 h3('Solution'),
+                 tableOutput('solution_grid'),
+                 textOutput('solution_message'))
         )
       )
     )
   ),
   tabPanel(
-    'About'#,
-    #includeMarkdown('about.md')
+    'About',
+    includeMarkdown('about.md')
   )
 )
