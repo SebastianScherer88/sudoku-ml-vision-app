@@ -6,11 +6,11 @@ This repo contains all the code (and some instructions on the hosting setup) for
 
 It is exposed to a URL (which sadly changes everytime the AWS server restarts) which the user can then access via their webbrowser. The user will then see a GUI that allows him/her to input initial values of a the classic sudoku problem.
 
-![Inputting the initial values](./Docs/user_inputs.png)
+![Inputting the initial values](./Docs/user_inputs.PNG)
 
 They can then get the solved sudoku printed back to them by clicking on the `Solve!` button:
 
-![Getting that sweet solved sudoku](./Docs/output_solution.png)
+![Getting that sweet solved sudoku](./Docs/output_solution.PNG)
 
 Both inputs and solution can be reset by clicking on the `Clear` button.
 
