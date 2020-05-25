@@ -173,7 +173,7 @@ server <- function(input, output, session) {
                 colnames = NULL, 
                 options = list(dom = 't',
                                bSort=FALSE,
-                               #autoWidth = TRUE,
+                               autoWidth = TRUE,
                                columnDefs = list(
                                  list(width = '200px', targets = "_all"),
                                  list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
