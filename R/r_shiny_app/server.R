@@ -58,6 +58,53 @@ derive_constraints_from_initial_grid <- function(grid_matrix){
   return (initial_constraints)
 }
 
+render_solution <- function(solution_matrix){
+  
+  if (is.null(solution_matrix)){
+    renderTable(
+      {
+        solution_matrix
+      },
+      colnames = FALSE,
+      digits = 0
+    )
+  } else {
+    augmented_solution_matrix <- cbind(solution_matrix,
+                                       c(1,1,1,0,0,0,1,1,1))
+    
+    DT::renderDataTable({
+      datatable(augmented_solution_matrix,
+                rownames = NULL, 
+                colnames = NULL, 
+                options = list(dom = 't',
+                               bSort=FALSE,
+                               autoWidth = TRUE,
+                               columnDefs = list(
+                                 list(width = '200px', targets = "_all"),
+                                 list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
+                               )
+                ) 
+      ) %>% 
+        formatStyle(
+          c('V1','V2','V3','V7','V8','V9'),'V10',
+          backgroundColor = styleEqual(c(0, 1), c('gray', 'white'))
+        ) %>% 
+        formatStyle(
+          c('V4','V5','V6'),'V10',
+          backgroundColor = styleEqual(c(1, 0), c('gray', 'white'))
+        ) %>%
+        formatStyle(
+          c('V1','V2','V3','V4','V5','V6','V7','V8','V9'),
+          `border-right` = '1px solid black',
+          `border-top` = '1px solid black'
+        ) %>%
+        formatStyle(
+          'V1','V10', `border-left` = '1px solid black'
+        )
+    })
+  }
+}
+
 server <- function(input, output, session) {
   
   # check user inputs and remove invalid ones
@@ -155,13 +202,15 @@ server <- function(input, output, session) {
     }
   )
   
-  output$solution_grid <- renderTable(
-    {
-      solution_grid()
-    },
-    colnames = FALSE,
-    digits = 0
-  )
+  #output$solution_grid <- renderTable(
+  #  {
+  #    solution_grid()
+  #  },
+  #  colnames = FALSE,
+  #  digits = 0
+  #)
+  
+  output$solution_grid <- reactive({render_solution(solution_grid())})
   
   output$solution_message <- renderText({solution_message()})
     }
