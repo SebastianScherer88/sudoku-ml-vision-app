@@ -175,6 +175,7 @@ server <- function(input, output, session) {
                                bSort=FALSE,
                                autoWidth = TRUE,
                                columnDefs = list(
+                                 list(className = "dt-center", targets = "_all"),
                                  list(width = '200px', targets = "_all"),
                                  list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
                                )

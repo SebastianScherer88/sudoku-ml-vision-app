@@ -31,7 +31,7 @@ ui <- navbarPage(
                              class = 'character')),
           column(width = 1,
                  h3('')),
-          column(width = 2,
+          column(width = 3,
                  h3('Solution'),
                  dataTableOutput('solution_grid'),
                  textOutput('solution_message'))
