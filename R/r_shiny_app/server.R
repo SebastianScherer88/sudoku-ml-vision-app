@@ -44,9 +44,9 @@ derive_constraints_from_initial_grid <- function(grid_matrix){
       if (grid_matrix[i,j] != list('')){
         # append constraint list based on pydantic model 'InitialValueConstraint' defined in sudoku_solver_api.py
         constraints[[counter]] <- list(row_index = as.integer(i-1),
-                                        column_index = as.integer(j-1),
-                                        value = as.integer(grid_matrix[i,j][[1]]))
-
+                                       column_index = as.integer(j-1),
+                                       value = as.integer(grid_matrix[i,j][[1]]))
+        
         counter <- counter + 1
       }
     }
@@ -109,7 +109,7 @@ server <- function(input, output, session) {
     {
       input$solve
       response <- content(POST(sudoku_solver_url,
-                    body = initial_constraints(), encode = "json"))
+                               body = initial_constraints(), encode = "json"))
     }
   )
   
@@ -142,7 +142,7 @@ server <- function(input, output, session) {
       
       print(solution_grid())
     }
-  )
+        )
   
   observeEvent(
     input$clear,
@@ -164,4 +164,4 @@ server <- function(input, output, session) {
   )
   
   output$solution_message <- renderText({solution_message()})
-}
+    }
