@@ -33,8 +33,8 @@ ui <- navbarPage(
                  h3('')),
           column(width = 3,
                  h3('Solution'),
-                 dataTableOutput('solution_grid'),
-                 textOutput('solution_message'))
+                 h5(textOutput('solution_message')),
+                 dataTableOutput('solution_grid'))
         )
       )
     )

@@ -155,9 +155,7 @@ server <- function(input, output, session) {
       print(solution_grid())
     }
   )
-  
-  augmented_solution_grid <- reactive({})
-  
+
   output$solution_grid <- DT::renderDataTable({
     
     augmented_solution_grid <- as.data.frame(cbind(solution_grid(),
