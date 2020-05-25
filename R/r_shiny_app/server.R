@@ -5,6 +5,7 @@ library(httr)
 # --- some constants
 # valid grid cell values for initial sudoku
 grid_cell_value_range <- c('1','2','3','4','5','6','7','8','9','')
+grid_cell_color_filter <- c(1,1,1,0,0,0,1,1,1)
 
 # solving endpoint of python-based FastAPI RestAPI that does the solving of sudoku via integer programming
 sudoku_solver_url <- '127.0.0.1:8000/solve/'
@@ -56,53 +57,6 @@ derive_constraints_from_initial_grid <- function(grid_matrix){
   initial_constraints <- list(initial_values = constraints)
   
   return (initial_constraints)
-}
-
-render_solution <- function(solution_matrix){
-  
-  if (is.null(solution_matrix)){
-    renderTable(
-      {
-        solution_matrix
-      },
-      colnames = FALSE,
-      digits = 0
-    )
-  } else {
-    augmented_solution_matrix <- cbind(solution_matrix,
-                                       c(1,1,1,0,0,0,1,1,1))
-    
-    DT::renderDataTable({
-      datatable(augmented_solution_matrix,
-                rownames = NULL, 
-                colnames = NULL, 
-                options = list(dom = 't',
-                               bSort=FALSE,
-                               autoWidth = TRUE,
-                               columnDefs = list(
-                                 list(width = '200px', targets = "_all"),
-                                 list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
-                               )
-                ) 
-      ) %>% 
-        formatStyle(
-          c('V1','V2','V3','V7','V8','V9'),'V10',
-          backgroundColor = styleEqual(c(0, 1), c('gray', 'white'))
-        ) %>% 
-        formatStyle(
-          c('V4','V5','V6'),'V10',
-          backgroundColor = styleEqual(c(1, 0), c('gray', 'white'))
-        ) %>%
-        formatStyle(
-          c('V1','V2','V3','V4','V5','V6','V7','V8','V9'),
-          `border-right` = '1px solid black',
-          `border-top` = '1px solid black'
-        ) %>%
-        formatStyle(
-          'V1','V10', `border-left` = '1px solid black'
-        )
-    })
-  }
 }
 
 server <- function(input, output, session) {
@@ -202,15 +156,52 @@ server <- function(input, output, session) {
     }
   )
   
-  #output$solution_grid <- renderTable(
-  #  {
-  #    solution_grid()
-  #  },
-  #  colnames = FALSE,
-  #  digits = 0
-  #)
+  augmented_solution_grid <- reactive({})
   
-  output$solution_grid <- reactive({render_solution(solution_grid())})
+  output$solution_grid <- DT::renderDataTable({
+    
+    augmented_solution_grid <- as.data.frame(cbind(solution_grid(),
+                                                   grid_cell_color_filter))
+    
+    if (is.null(solution_grid())){
+      datatable(augmented_solution_grid,
+                options = list(dom = 't',bSort=FALSE,columnDefs = list(list(visible=FALSE, targets = "_all"))))
+    } else if (!is.null(solution_grid())){
+      
+      datatable(augmented_solution_grid,
+                rownames = NULL, 
+                colnames = NULL, 
+                options = list(dom = 't',
+                               bSort=FALSE,
+                               autoWidth = TRUE,
+                               columnDefs = list(
+                                 list(width = '200px', targets = "_all"),
+                                 list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
+                               )
+                )
+      ) %>% 
+        formatStyle(
+          columns = 1:10, color = 'white'
+        ) %>%
+        formatStyle(
+          c('V1','V2','V3','V7','V8','V9'),'grid_cell_color_filter',
+          backgroundColor = styleInterval(c(0.5), c('black','rgb(90,90,90)'))
+        ) %>% 
+        formatStyle(
+          c('V4','V5','V6'),'grid_cell_color_filter',
+          backgroundColor = styleInterval(c(0.5), c('rgb(90,90,90)','black'))
+        ) %>%
+        formatStyle(
+          c('V1','V2','V3','V4','V5','V6','V7','V8','V9'),
+          `border-right` = '1px solid white',
+          `border-top` = '1px solid white',
+          `border-bottom` = '1px solid white'
+        ) %>%
+        formatStyle(
+          'V1','grid_cell_color_filter', `border-left` = '1px solid white'
+        )
+    }
+  })
   
   output$solution_message <- renderText({solution_message()})
     }
