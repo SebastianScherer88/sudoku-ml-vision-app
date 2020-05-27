@@ -12,6 +12,10 @@ They can then get the solved sudoku printed back to them by clicking on the `Sol
 
 ![Getting that sweet solved sudoku](./Docs/output_solution.PNG)
 
+Alternatively, you can get a single additional digit filled in by clicking the `Clue` button:
+
+![Only a peek](./Docs/output_clue.PNG)
+
 Both inputs and solution can be reset by clicking on the `Clear` button.
 
 ## But why?
