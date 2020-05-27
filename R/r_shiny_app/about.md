@@ -12,14 +12,16 @@ For feedback or suggestions on how to improve this app, please reach out: schere
 
 You can start inputting values into the grid just below the line that says `Inputs` on the left hand side.
 
-Once you're happy with the initial values, click the `Solve!` button.
+Once you're happy with the initial values, click the 
+- `Solve` button for a completely solved Sudoku, or
+- `Clue` for a random additional digit filled in
 
 If solvable, the solution will appear on the right hand side just below the `Solution` line.
 
 To clear both inputs and solution, click the `Clear` button.
 
 Please note that on your mobile, the
-- `Solve!` and `Clear` button might appear at the very top of your screen
+- `Solve`,`Clue` and `Clear` button might appear at the very top of your screen
 - the `Inputs` will appear just below that
 - and the `Solution` section might have moved all the way down - you might have to scroll down to see it!
 
