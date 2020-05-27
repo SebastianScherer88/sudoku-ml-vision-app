@@ -100,7 +100,7 @@ server <- function(input, output, session) {
   
   # try and solve current initial value grid by calling out to sudoku solver python RestAPI
   initial_constraints <- eventReactive(
-    input$solve,
+    input$solve | input$clue,
     {
       derive_constraints_from_initial_grid(input$initial_grid)
     }
@@ -108,7 +108,6 @@ server <- function(input, output, session) {
   
   sudoku_solver_response <- reactive(
     {
-      input$solve
       response <- content(POST(sudoku_solver_url,
                                body = initial_constraints(), encode = "json"))
     }
@@ -121,29 +120,77 @@ server <- function(input, output, session) {
     input$solve,
     {
       if (sudoku_solver_response()$solved == 1){
-        # render solved sudoku
+        # take entire solution grid
         solution_grid(do.call(rbind,sudoku_solver_response()$solution))
-        solution_message('Sudoku with given initial values was successfully solved :)')
+        solution_message('Sudoku with given initial values was successfully solved.')
       } else if (sudoku_solver_response()$solved == -1){
         # render empty grid to highlight lack of solution
         #solution_grid(matrix(data = NA, nrow = 9,ncol = 9))
         solution_grid(NULL)
-        solution_message('Sudoku with given initial values was not solvable :(')
+        solution_message('Sudoku with given initial values was not solvable.')
         
         # print dialog box with informative value range message
-        showModal(modalDialog(
-          title = "Unlucky!",
-          "Please check whether you have accidentally put multiple identical digits in the same row/column/box. \n
-          Even if that isnt the case, if too many/the wrong initial values are given, the resulting constraints create a Sudoku that isnt solvable. \n
-          In that case, try some other initial values.",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      }
-      
-      print(solution_grid())
-    }
+        showModal(
+          modalDialog(
+            title = "Unlucky!",
+            "Please check whether you have accidentally put multiple identical digits in the same row/column/box. \n
+            Even if that isnt the case, if too many/the wrong initial values are given, the resulting constraints create a Sudoku that isnt solvable. \n
+            In that case, try some other initial values.",
+            easyClose = TRUE,
+            footer = NULL
+          )
         )
+      }
+    }
+  )
+  
+  observeEvent(
+    input$clue,
+    {
+      if (sudoku_solver_response()$solved == 1){
+        # only take one value from solution that isnt already on the input grid
+        valid_clue_positions <- list()
+        empties <- input$initial_grid == ''
+        
+        for (i in 1:9){
+          for (j in 1:9){
+            if (empties[i,j] == TRUE){
+              valid_clue_positions <- append(valid_clue_positions,list(c(i,j)))
+            }
+          }
+        }
+        
+        clue <- matrix(data = rep('',81), ncol = 9, nrow = 9)
+
+        random_clue <- sample(valid_clue_positions,1)[[1]]
+
+        temp_solution <- do.call(rbind,sudoku_solver_response()$solution)
+
+        clue[random_clue[1],random_clue[2]] <- temp_solution[random_clue[1],random_clue[2]][[1]][1]
+
+        solution_grid(clue)
+  
+        solution_message('Does this help?')
+        } else if (sudoku_solver_response()$solved == -1){
+          # render empty grid to highlight lack of solution
+          #solution_grid(matrix(data = NA, nrow = 9,ncol = 9))
+          solution_grid(NULL)
+          solution_message('Sudoku with given initial values was not solvable.')
+          
+          # print dialog box with informative value range message
+          showModal(
+            modalDialog(
+              title = "Unlucky!",
+              "Please check whether you have accidentally put multiple identical digits in the same row/column/box. \n
+              Even if that isnt the case, if too many/the wrong initial values are given, the resulting constraints create a Sudoku that isnt solvable. \n
+              In that case, try some other initial values.",
+              easyClose = TRUE,
+              footer = NULL
+            )
+          )
+        }
+    }
+  )
   
   observeEvent(
     input$clear,
@@ -175,6 +222,7 @@ server <- function(input, output, session) {
                                columnDefs = list(
                                  list(className = "dt-center", targets = "_all"),
                                  list(width = '200px', targets = "_all"),
+                                 list(height = '200px', targets = "_all"),
                                  list(visible=FALSE,targets=c(9)) # references 10th column - java script/pythonic? indexing starting at 0
                                )
                 )
@@ -194,7 +242,8 @@ server <- function(input, output, session) {
           c('V1','V2','V3','V4','V5','V6','V7','V8','V9'),
           `border-right` = '1px solid white',
           `border-top` = '1px solid white',
-          `border-bottom` = '1px solid white'
+          `border-bottom` = '1px solid white',
+          `height` = 20
         ) %>%
         formatStyle(
           'V1','grid_cell_color_filter', `border-left` = '1px solid white'

@@ -14,14 +14,16 @@ ui <- navbarPage(
     sidebarLayout(
       sidebarPanel(
         width = 1,
-        actionButton('solve','Solve!'),
+        actionButton('solve','Solve'),
+        h3(''),
+        actionButton('clue','Clue'),
         h3(''),
         actionButton('clear','Clear')
       ),
       mainPanel(
-        width = 11,
+        width = 10,
         fluidRow(
-          column(width = 5,
+          column(width = 3,
                  h3('Inputs'),
                  h5('Please enter the initial values (1-9) of the sudoku you want to solve.'),
                  matrixInput('initial_grid',
