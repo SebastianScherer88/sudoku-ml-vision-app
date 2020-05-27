@@ -14,9 +14,9 @@ ui <- navbarPage(
     sidebarLayout(
       sidebarPanel(
         width = 1,
-        actionButton('solve','Solve'),
-        h3(''),
         actionButton('clue','Clue'),
+        h3(''),
+        actionButton('solve','Solve'),
         h3(''),
         actionButton('clear','Clear')
       ),
