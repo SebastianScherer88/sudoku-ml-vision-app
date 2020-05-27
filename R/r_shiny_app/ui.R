@@ -23,7 +23,7 @@ ui <- navbarPage(
       mainPanel(
         width = 10,
         fluidRow(
-          column(width = 3,
+          column(width = 4,
                  h3('Inputs'),
                  h5('Please enter the initial values (1-9) of the sudoku you want to solve.'),
                  matrixInput('initial_grid',
