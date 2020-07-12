@@ -11,9 +11,9 @@ import numpy as np
 
 from keras.losses import categorical_crossentropy as xentropy
 from keras.utils import to_categorical
-from keras.models import Sequential, save_model
-from keras.layers import Conv2D,MaxPooling2D,Flatten,Dense,LeakyReLU
-from keras.optimizers import Adam,SGD
+from keras.models import Sequential
+from keras.layers import Conv2D,MaxPooling2D,Flatten,Dense
+from keras.optimizers import Adam
 
 
 def rotate_image(image, angle):
