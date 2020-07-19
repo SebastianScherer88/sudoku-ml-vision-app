@@ -136,7 +136,7 @@ def recognize_sudoku_grid(sudoku_image: np.array,
     elif len(formatted_image_patches) != 81:
         
         # the input matrix field in the shiny dashboard expects string values 1-9, and an empty string to demark empty fields
-        was_successful, parsed_grid = False, np.array([[''] * 81]).reshape(9,9)
+        was_successful, parsed_grid = False, [[''] * 9 for i in range(9)]
     
     return was_successful, parsed_grid
 
