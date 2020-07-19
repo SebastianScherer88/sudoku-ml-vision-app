@@ -29,13 +29,18 @@ def get_bounding_rect(contour_array: np.array,
     return [bounding_rect, (b1,b2,b3,b4)]
 
 def extract_grid_cell_patches(sudoku_image: np.array,
-                              resize = (500,500)):
+                              resize = (500,500),
+                              convert_to_gray_scale = True):
     
     # --- resize image
     sudoku_image = cv2.resize(sudoku_image, resize)
     
     # --- extract sudoku grid patch
-    gray = cv2.cvtColor(sudoku_image, cv2.COLOR_BGR2GRAY)    
+    if convert_to_gray_scale:
+        gray = cv2.cvtColor(sudoku_image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = sudoku_image
+        
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)    
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -84,6 +89,7 @@ def extract_grid_cell_patches(sudoku_image: np.array,
 
 def recognize_sudoku_grid(sudoku_image: np.array,
                           recognizer_model,
+                          convert_to_gray_scale = True,
                           resize = (500,500)):
     ''' Takes an array representing an image of the sudoku grid with initial values and applies the digit recognitition pipeline by
     - extracting the grid cell patches
@@ -91,6 +97,7 @@ def recognize_sudoku_grid(sudoku_image: np.array,
     and returning a 9x9 array of recognized initial value digits.'''
     
     sudoku_image, sudoku_grid_mask, mask_rect, image_patches, image_patch_coordinates = extract_grid_cell_patches(sudoku_image,
+                                                                                                                  convert_to_gray_scale = convert_to_gray_scale,
                                                                                                                   resize = resize)
     
     image_patch_df = pd.DataFrame(data = image_patch_coordinates,
@@ -98,44 +105,55 @@ def recognize_sudoku_grid(sudoku_image: np.array,
     
     formatted_image_patches = [normalize_image(np.expand_dims(image_patch,axis=[0,-1])) for image_patch in image_patches]
     
-    image_patch_df['digit'] = [str(np.argmax(recognizer_model.predict(formatted_image_patch)) + 1) for formatted_image_patch in formatted_image_patches]
-    image_patch_df['digit'] = image_patch_df['digit'].replace({'10':'blank'})
+    # if image was parsed successfully into 81 grid cell patches, predict on those patches and assemble prediction grid
+    if len(formatted_image_patches) == 81:
+        image_patch_df['digit'] = [str(np.argmax(recognizer_model.predict(formatted_image_patch)) + 1) for formatted_image_patch in formatted_image_patches]
+        
+        # the input matrix field in the shiny dashboard expects string values 1-9, and an empty string to demark empty fields
+        image_patch_df['digit'] = image_patch_df['digit'].replace({'10':''}).astype(str)
+        
+        image_patch_df = image_patch_df.sort_values(by = ['y_up'],
+                                       ascending = True)
+        
+        image_patch_df['row_index'] = [i for i in range(1,10) for j in range(9)]
+        
+        image_patch_df = image_patch_df.sort_values(by = ['x_left'],
+                                       ascending = True)
+        
+        image_patch_df['column_index'] = [i for i in range(1,10) for j in range(9)]
+        
+        parsed_grid = image_patch_df[['row_index','column_index','digit']]. \
+            sort_values(['row_index','column_index'])['digit']. \
+            values. \
+            reshape(9,9)
+            
+        # convert to nested list for API ParsedSudokuImage response model class
+        parsed_grid = [list(row) for row in parsed_grid]
+            
+        was_successful = True
     
-    image_patch_df = image_patch_df.sort_values(by = ['y_up'],
-                                   ascending = True)
+    # if image was not parsed successfully, return error flag
+    elif len(formatted_image_patches) != 81:
+        
+        # the input matrix field in the shiny dashboard expects string values 1-9, and an empty string to demark empty fields
+        was_successful, parsed_grid = False, np.array([[''] * 81]).reshape(9,9)
     
-    image_patch_df['row_index'] = [i for i in range(1,10) for j in range(9)]
-    
-    image_patch_df = image_patch_df.sort_values(by = ['x_left'],
-                                   ascending = True)
-    
-    image_patch_df['column_index'] = [i for i in range(1,10) for j in range(9)]
-    
-    sudoku_grid = image_patch_df[['row_index','column_index','digit']]. \
-        sort_values(['row_index','column_index'])['digit']. \
-        values. \
-        reshape(9,9)
-    
-    return sudoku_grid
+    return was_successful, parsed_grid
 
 # =============================================================================
-# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/Mask_RCNN/datasets/sudoku/val_original/sudoku_1.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/Mask_RCNN/datasets/sudoku/val_original/sudoku_1.jpg")
 # sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165814.jpg")
-# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165827.jpg")
-# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165827.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
 # 
 # image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image)
 # 
-#
-#sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
-#image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image)
-#
-#recognizer_model = load_model(r'C:/Users/bettmensch/GitReps/sudoku_solver/model/grid_cell_classifier')
-#
-#sudoku_grid = recognize_sudoku_grid(sudoku_image,
+# recognizer_model = load_model(r'C:/Users/bettmensch/GitReps/sudoku_solver/model/grid_cell_classifier')
+# 
+# sudoku_grid = recognize_sudoku_grid(sudoku_image,
 #                                    recognizer_model)
-#print(sudoku_grid)
-#
+# print(sudoku_grid)
+# 
 # cv2.imshow("mask_rect", image)
 # cv2.waitKey()
 # 
@@ -145,24 +163,29 @@ def recognize_sudoku_grid(sudoku_image: np.array,
 # cv2.imshow("mask_rect", image_cell_patches)
 # cv2.waitKey()
 # 
+# 
 # for patch in image_cell_patches_list[-20:]:
-#     cv2.imshow("mask_rect", patch)
-#     cv2.waitKey()
+#    cv2.imshow("mask_rect", patch)
+#    cv2.waitKey()
 # =============================================================================
 
-snapshot_dir= r'C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots'
-extraction_patch_dir = r'C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/extracted_snapshot_digits'
-
-extracted_patch_counter = 0
-
-for image in os.listdir(snapshot_dir):
-    snapshot_path = os.path.join(snapshot_dir,image)
-    snapshot = cv2.imread(snapshot_path)
+def main():
+    snapshot_dir= r'C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots'
+    extraction_patch_dir = r'C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/extracted_snapshot_digits'
     
-    _, _, _, extracted_cells, extracted_cell_positions = extract_grid_cell_patches(snapshot)
+    extracted_patch_counter = 0
     
-    for extracted_cell in extracted_cells:
-        extracted_cell_path = os.path.join(extraction_patch_dir,'sudoku_cell_' + str(extracted_patch_counter) + '.png')
-        cv2.imwrite(extracted_cell_path, extracted_cell)
+    for image in os.listdir(snapshot_dir):
+        snapshot_path = os.path.join(snapshot_dir,image)
+        snapshot = cv2.imread(snapshot_path)
         
-        extracted_patch_counter += 1
+        _, _, _, extracted_cells, extracted_cell_positions = extract_grid_cell_patches(snapshot)
+        
+        for extracted_cell in extracted_cells:
+            extracted_cell_path = os.path.join(extraction_patch_dir,'sudoku_cell_' + str(extracted_patch_counter) + '.png')
+            cv2.imwrite(extracted_cell_path, extracted_cell)
+            
+            extracted_patch_counter += 1    
+
+if __name__ == '__main__':
+    main()

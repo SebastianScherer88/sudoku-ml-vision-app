@@ -8,6 +8,7 @@ grid_cell_value_range <- c('1','2','3','4','5','6','7','8','9','')
 grid_cell_color_filter <- c(1,1,1,0,0,0,1,1,1)
 
 # solving endpoint of python-based FastAPI RestAPI that does the solving of sudoku via integer programming
+sudoku_parse_image_url <- '127.0.0.1:8000/parse_image/'
 sudoku_solver_url <- '127.0.0.1:8000/solve/'
 
 # --- helper functions
@@ -61,6 +62,59 @@ derive_constraints_from_initial_grid <- function(grid_matrix){
 
 server <- function(input, output, session) {
   
+  
+  
+  # check image upload, parse, recognize and update initial value grid
+  observeEvent(
+    input$initial_picture_upload,
+    {
+      # display message that image is being transferred, loaded and parsed
+      showModal(
+        modalDialog(
+          title = 'Your image is being procesed...',
+          "Please wait while the image is being uploaded and parsed. This may take up to a minute.",
+          footer = NULL
+          )
+        )
+      
+      # parse and recognize the sudoku image by calling the python recognition model endpoint
+      image_parser_return <- content(
+        POST(sudoku_parse_image_url,
+             body = list(image_path = input$initial_picture_upload$datapath),
+             encode = "json")
+        )
+      
+      # remove loading display
+      removeModal()
+      
+      # if image parsing was successful, update initial value grid with parsed values
+      if (image_parser_return$was_parsing_sucessful){
+        # a list of lists (inner lists being the rows) needs to be converted to the right matrix format for updating of initial value field
+        initial_value_grid <- image_parser_return$parsed_values %>%
+          unlist %>%
+          matrix(nrow = 9, ncol = 9) %>%
+          t
+        
+        # update matrix input initial values parsed from image
+        updateMatrixInput(session,
+                          'initial_grid',
+                          matrix(data = initial_value_grid,
+                                 nrow = 9,
+                                 ncol = 9))
+      } else if (!image_parser_return$was_parsing_sucessful){
+        # print dialog box with informative value range message
+        showModal(
+          modalDialog(
+            title = "Unlucky!",
+            "It looks like the image you uploaded couldn't be handled by our AI. Please try uploading a different picture, or enter the initial values by hand.",
+            easyClose = FALSE,
+            footer = modalButton('OK')
+          )
+        )
+      }
+    }
+  )
+  
   # check user inputs and remove invalid ones
   observeEvent(
     input$initial_grid,
@@ -73,8 +127,8 @@ server <- function(input, output, session) {
         showModal(modalDialog(
           title = "Careful!",
           "Initial values must be between 1 and 9 (inclusive) only.",
-          easyClose = TRUE,
-          footer = NULL
+          easyClose = FALSE,
+          footer = modalButton('OK')
         ))
         
         # undo invalid inputs and updte UI initial value matrix accordingly
@@ -136,8 +190,8 @@ server <- function(input, output, session) {
             "Please check whether you have accidentally put multiple identical digits in the same row/column/box. \n
             Even if that isnt the case, if too many/the wrong initial values are given, the resulting constraints create a Sudoku that isnt solvable. \n
             In that case, try some other initial values.",
-            easyClose = TRUE,
-            footer = NULL
+            easyClose = FALSE,
+            footer = modalButton('OK')
           )
         )
       }
@@ -184,8 +238,8 @@ server <- function(input, output, session) {
               "Please check whether you have accidentally put multiple identical digits in the same row/column/box. \n
               Even if that isnt the case, if too many/the wrong initial values are given, the resulting constraints create a Sudoku that isnt solvable. \n
               In that case, try some other initial values.",
-              easyClose = TRUE,
-              footer = NULL
+              easyClose = FALSE,
+              footer = modalButton('OK')
             )
           )
         }
