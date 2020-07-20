@@ -163,11 +163,15 @@ def root():
 def parse_image(initial_image: InitialImage):
     
     sudoku_image = cv2.imread(initial_image.image_path)
+    
+    re_size = int(sudoku_image.shape[1]/sudoku_image.shape[0] * 1000), 1000
+    
+    print(re_size)
 
     was_parsing_successful, parsed_image = recognize_sudoku_grid(sudoku_image = sudoku_image,
                                                                  convert_to_gray_scale = True,
                                                                  recognizer_model = recognizer_model,
-                                                                 resize = (IM_WIDTH, IM_HEIGHT))
+                                                                 resize = re_size)
     
     return ParsedSudokuImage(was_parsing_sucessful = was_parsing_successful,
                              parsed_values = parsed_image)

@@ -68,13 +68,14 @@ def extract_grid_cell_patches(sudoku_image: np.array,
     contours_patch, _ = cv2.findContours(thresh_patch, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
     for i,contour in enumerate(contours_patch):
-        if cv2.contourArea(contour) > 400:
+        if cv2.contourArea(contour) > 600:
             cv2.drawContours(sudoku_grid_mask,contours_patch,i,(0, 255, 0), 7)
     
     cell_patches, _ = cv2.findContours(sudoku_grid_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cell_bounding_rectangles = [get_bounding_rect(cell_patch,sudoku_grid_mask.shape) for cell_patch in cell_patches]
     
     mask_rect = np.zeros_like(sudoku_grid_mask)
+    #image_patches_orig = []
     image_patches = []
     image_patch_coordinates = []
     
@@ -82,6 +83,7 @@ def extract_grid_cell_patches(sudoku_image: np.array,
         cell_rect, coords = cell_rect_bundle
         b1,b2,b3,b4 = coords
         mask_rect[cell_rect == 1] = sudoku_grid_patch[cell_rect == 1]
+        #image_patches_orig.append(sudoku_grid_patch[b1:b2,b3:b4])
         image_patches.append(cv2.resize(sudoku_grid_patch[b1:b2,b3:b4],(100,100)))
         image_patch_coordinates.append(coords)
         
@@ -142,16 +144,22 @@ def recognize_sudoku_grid(sudoku_image: np.array,
 
 # =============================================================================
 # #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/Mask_RCNN/datasets/sudoku/val_original/sudoku_1.jpg")
-# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165814.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165814.jpg")
 # #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165827.jpg")
 # #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/Downloads/20200720_155952.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/Downloads/20200720_160015.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/Downloads/20200720_155950.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/Downloads/20200720_155954.jpg")
 # 
-# image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image)
+# image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image,
+#                                                                                                                             resize = (int(0.563*1000),1000))
 # 
 # recognizer_model = load_model(r'C:/Users/bettmensch/GitReps/sudoku_solver/model/grid_cell_classifier')
 # 
 # sudoku_grid = recognize_sudoku_grid(sudoku_image,
-#                                    recognizer_model)
+#                                    recognizer_model,
+#                                    resize = (int(0.563*1000),1000))
 # print(sudoku_grid)
 # 
 # cv2.imshow("mask_rect", image)
