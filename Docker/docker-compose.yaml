@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  model_api:
+    image: 'bettmensch88/sudoku_model_api:latest'
+    #command: ["/bin/sh", "-c", "'./host_sudoku_solver_api.sh'"]
+    command: ["tail", "-f", "/dev/null"]
+  dashboard:
+    image: 'bettmensch88/sudoku_dashboard:latest'
+    ports:
+      - "3838:3838"
+    command: ["/usr/bin/shiny-server.sh"]
