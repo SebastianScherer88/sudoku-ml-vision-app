@@ -1,4 +1,4 @@
-FROM rocker/shiny:3.6.3
+FROM rocker/shiny:3.6.0
 
 RUN apt-get update
 RUN apt-get install -y libssl-dev
