@@ -22,8 +22,5 @@ RUN chmod o+wxr /sudoku_volume
 # set working directory
 WORKDIR /home/tensorflow_api/api
 
-# launch the sudoku solver model REST API
-RUN chmod +x ./host_sudoku_solver_api.sh
-
 # NOTE: The api will be hosted via the docker-compose file on a specified port (default at time of writing is 8000)
 # NOTE: It will be made accessible via the docker-compose file.
