@@ -1,6 +1,9 @@
 # Define server logic to plot various variables against mpg ----
 library(shiny)
 library(httr)
+library(yaml)
+
+deployment_config <- yaml::read_yaml('deployment_config.yaml')
 
 # --- some constants
 # valid grid cell values for initial sudoku
@@ -8,8 +11,14 @@ grid_cell_value_range <- c('1','2','3','4','5','6','7','8','9','')
 grid_cell_color_filter <- c(1,1,1,0,0,0,1,1,1)
 
 # solving endpoint of python-based FastAPI RestAPI that does the solving of sudoku via integer programming
-sudoku_parse_image_url <- 'http://model_api:8000/parse_image/'
-sudoku_solver_url <- 'http://model_api:8000/solve/'
+model_api_endpoint <- paste0('http://',
+                             deployment_config[['api']][['service_name']],
+                             ':',
+                             deployment_config[['api']][['container_port']],
+                             '/')
+
+sudoku_parse_image_url <- paste0(model_api_endpoint,'parse_image/')
+sudoku_solver_url <- paste0(model_api_endpoint,'solve/')
 
 # --- helper functions
 # checks if the initial values matrix has valid entries
@@ -78,7 +87,7 @@ server <- function(input, output, session) {
         )
 
       # copy image file to shared docker volume to make it accessible by image parsing micro service
-      shared_file_location = file.path("/sudoku_volume",input$initial_picture_upload$name)
+      shared_file_location = file.path(deployment_config[['dashboard']][['shared_drive']],input$initial_picture_upload$name)
 
       file.copy(input$initial_picture_upload$datapath, 
                 shared_file_location,
