@@ -3,7 +3,7 @@ library(shiny)
 library(httr)
 library(yaml)
 
-deployment_config <- yaml::load('deployment_config.yaml')
+deployment_config <- yaml::read_yaml('deployment_config.yaml')
 
 # --- some constants
 # valid grid cell values for initial sudoku
