@@ -8,8 +8,8 @@ grid_cell_value_range <- c('1','2','3','4','5','6','7','8','9','')
 grid_cell_color_filter <- c(1,1,1,0,0,0,1,1,1)
 
 # solving endpoint of python-based FastAPI RestAPI that does the solving of sudoku via integer programming
-sudoku_parse_image_url <- '127.0.0.1:8000/parse_image/'
-sudoku_solver_url <- '127.0.0.1:8000/solve/'
+sudoku_parse_image_url <- 'http://model_api:8000/parse_image/'
+sudoku_solver_url <- 'http://model_api:8000/solve/'
 
 # --- helper functions
 # checks if the initial values matrix has valid entries
@@ -76,11 +76,18 @@ server <- function(input, output, session) {
           footer = NULL
           )
         )
+
+      # copy image file to shared docker volume to make it accessible by image parsing micro service
+      shared_file_location = file.path("/sudoku_volume",input$initial_picture_upload$name)
+
+      file.copy(input$initial_picture_upload$datapath, 
+                shared_file_location,
+                overwrite = TRUE )
       
       # parse and recognize the sudoku image by calling the python recognition model endpoint
       image_parser_return <- content(
         POST(sudoku_parse_image_url,
-             body = list(image_path = input$initial_picture_upload$datapath),
+             body = list(image_path = shared_file_location),
              encode = "json")
         )
       

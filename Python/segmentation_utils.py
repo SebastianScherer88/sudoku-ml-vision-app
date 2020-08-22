@@ -28,6 +28,37 @@ def get_bounding_rect(contour_array: np.array,
     
     return [bounding_rect, (b1,b2,b3,b4)]
 
+def remove_overlapping_rectangles(bounding_rectangles: list,
+                                  min_dim_index = 20):
+    
+    # get average width and height from largest 20 rectangles
+    widths  = [rect[1][1] - rect[1][0] for rect in bounding_rectangles]
+    heights  = [rect[1][3] - rect[1][2] for rect in bounding_rectangles]
+    
+    widths.sort()
+    heights.sort()
+    
+    min_width, min_height = widths[-min_dim_index]/2, heights[-min_dim_index]/2
+    min_overlap_area = min_width * min_height
+    
+    # assemble list of non-overlapping rectangles iteratively
+    non_overlapping_rectangles = []
+    
+    for rectangle in bounding_rectangles:
+        overlapping = False
+        
+        for vetted_rectangle in non_overlapping_rectangles:
+            overlap_area = np.sum((rectangle[0] + vetted_rectangle[0]) == 2)/2
+            
+            if overlap_area > min_overlap_area:
+                overlapping = True
+                break
+                
+        if not overlapping:
+            non_overlapping_rectangles.append(rectangle)
+    
+    return non_overlapping_rectangles
+
 def extract_grid_cell_patches(sudoku_image: np.array,
                               resize = (500,500),
                               convert_to_gray_scale = True):
@@ -64,17 +95,56 @@ def extract_grid_cell_patches(sudoku_image: np.array,
     
     # --- extract individual grid cell patches as rectanges
     blur_patch = cv2.GaussianBlur(sudoku_grid_patch, (5,5), 0)    
-    thresh_patch = cv2.adaptiveThreshold(blur_patch, 255, 1, 1, 11, 2)    
-    contours_patch, _ = cv2.findContours(thresh_patch, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    thresh_patch = cv2.adaptiveThreshold(blur_patch, 255, 1, 1, 11, 3)    
+    contour_patches, _ = cv2.findContours(thresh_patch, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-    for i,contour in enumerate(contours_patch):
-        if cv2.contourArea(contour) > 400:
-            cv2.drawContours(sudoku_grid_mask,contours_patch,i,(0, 255, 0), 7)
+    # get 81st biggest patch area size; it will be the smalled grid cell patch we want to consider
+    contour_patches_areas = [cv2.contourArea(contour_patch) for contour_patch in contour_patches]
+    contour_patches_areas.sort()
+    min_contour_patches_area = contour_patches_areas[-81]
+    
+    counter_1 = 0
+    
+    for i,contour_patch in enumerate(contour_patches):
+        if cv2.contourArea(contour_patch) >= min_contour_patches_area:
+            counter_1 += 1
+            cv2.drawContours(sudoku_grid_mask,contour_patches,i,(0, 255, 0), 3)
+            #cv2.imshow("sudoku_grid_mask: " + str(counter), sudoku_grid_mask)
+            #cv2.waitKey()
+            
+        #print(counter)
     
     cell_patches, _ = cv2.findContours(sudoku_grid_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cell_bounding_rectangles = [get_bounding_rect(cell_patch,sudoku_grid_mask.shape) for cell_patch in cell_patches]
+    
+    # get 81 biggest contour areas; they are the grid cell patches
+    cell_patches_areas = [cv2.contourArea(cell_patch) for cell_patch in cell_patches]
+    cell_patches_areas.sort()
+    min_grid_cell_patches_area = cell_patches_areas[-81]
+    
+    counter_2 = 0
+    sudoku_grid_mask_2 = np.zeros((gray.shape),np.uint8)
+    cv2.drawContours(sudoku_grid_mask_2,[sudoku_grid_outline],0,255,-1)
+    cv2.drawContours(sudoku_grid_mask_2,[sudoku_grid_outline],0,0,2)
+    
+    #cv2.imshow("sudoku_grid_mask 2 clean: " + str(counter_2), sudoku_grid_mask_2)
+    #cv2.waitKey()
+    
+    cell_patches_final = []
+    
+    for i,cell_patch in enumerate(cell_patches):
+        if cv2.contourArea(cell_patch) >= min_grid_cell_patches_area:
+            cell_patches_final.append(cell_patch)
+            counter_2 += 1
+            cv2.drawContours(sudoku_grid_mask_2,cell_patches,i,(0, 255, 0), 3)
+            #if counter_2 >= 54:
+                #cv2.imshow("sudoku_grid_mask: " + str(counter_2), sudoku_grid_mask_2)
+                #cv2.waitKey()
+    
+    cell_bounding_rectangles = [get_bounding_rect(cell_patch,sudoku_grid_mask_2.shape) for cell_patch in cell_patches_final]
+    cell_bounding_rectangles = remove_overlapping_rectangles(cell_bounding_rectangles)
     
     mask_rect = np.zeros_like(sudoku_grid_mask)
+    #image_patches_orig = []
     image_patches = []
     image_patch_coordinates = []
     
@@ -82,6 +152,7 @@ def extract_grid_cell_patches(sudoku_image: np.array,
         cell_rect, coords = cell_rect_bundle
         b1,b2,b3,b4 = coords
         mask_rect[cell_rect == 1] = sudoku_grid_patch[cell_rect == 1]
+        #image_patches_orig.append(sudoku_grid_patch[b1:b2,b3:b4])
         image_patches.append(cv2.resize(sudoku_grid_patch[b1:b2,b3:b4],(100,100)))
         image_patch_coordinates.append(coords)
         
@@ -141,17 +212,26 @@ def recognize_sudoku_grid(sudoku_image: np.array,
     return was_successful, parsed_grid
 
 # =============================================================================
-# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/Mask_RCNN/datasets/sudoku/val_original/sudoku_1.jpg")
-# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165814.jpg")
-# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165827.jpg")
-# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
-# 
-# image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image)
-# 
 # recognizer_model = load_model(r'C:/Users/bettmensch/GitReps/sudoku_solver/model/grid_cell_classifier')
 # 
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/Mask_RCNN/datasets/sudoku/val_original/sudoku_1.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165814.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165827.jpg")
+# #sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/sudoku_recognition/snapshots/20200620_165824.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_155952.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_160015.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_155950.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_155954.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_224345.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_224750.jpg")
+# sudoku_image = cv2.imread(r"C:/Users/bettmensch/GitReps/sudoku_solver/data/segmentation_validate/20200720_224756.jpg")
+# 
+# image, white_cell_patches, image_cell_patches, image_cell_patches_list, image_patch_coordinates = extract_grid_cell_patches(sudoku_image,
+#                                                                                                                             resize = (int(0.563*1000),1000))
+# 
 # sudoku_grid = recognize_sudoku_grid(sudoku_image,
-#                                    recognizer_model)
+#                                    recognizer_model,
+#                                    resize = (int(0.563*1000),1000))
 # print(sudoku_grid)
 # 
 # cv2.imshow("mask_rect", image)

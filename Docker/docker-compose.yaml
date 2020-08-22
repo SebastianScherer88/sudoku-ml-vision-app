@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  model_api:
+    image: 'bettmensch88/sudoku_model_api:latest'
+    volumes:
+      - sudoku_volume:/sudoku_volume
+    #command: ["/bin/sh", "-c", "'./host_sudoku_solver_api.sh'"]
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "sudoku_solver_api:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    #command: ["tail", "-f", "/dev/null"]
+  dashboard:
+    image: 'bettmensch88/sudoku_dashboard:latest'
+    volumes:
+      - sudoku_volume:/sudoku_volume
+    ports:
+      - "3838:3838"
+    command: ["/usr/bin/shiny-server.sh"]
+volumes:
+  sudoku_volume:
