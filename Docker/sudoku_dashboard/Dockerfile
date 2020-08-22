@@ -12,4 +12,4 @@ COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
 RUN mkdir /sudoku_volume
 RUN chown shiny:shiny /sudoku_volume
 
-EXPOSE 3838
+# NOTE: Shiny server runs on port 3838 - that will be made accessible via the docker-compose file
