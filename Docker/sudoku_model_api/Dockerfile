@@ -1,4 +1,4 @@
-FROM python:3.7.8
+FROM python:3.6.9
 
 RUN apt update
 RUN apt install -y libgl1-mesa-glx
@@ -18,9 +18,13 @@ RUN pip install -r /home/tensorflow_api/pip_requirements --no-cache-dir
 # expose api port
 EXPOSE 8000
 
+# create mount point for shared drive and make it readable for python api root process
+RUN mkdir /sudoku_volume
+RUN chmod o+wxr /sudoku_volume
+
 # set working directory
 WORKDIR /home/tensorflow_api/api
 
 # launch the sudoku solver model REST API
 RUN chmod +x ./host_sudoku_solver_api.sh
-CMD  './host_sudoku_solver_api.sh'
+#CMD  './host_sudoku_solver_api.sh'

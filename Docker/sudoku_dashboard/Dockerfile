@@ -8,4 +8,8 @@ RUN R -e "install.packages(c('httr', 'shinythemes', 'shinyMatrix','DT'),repos='h
 RUN mkdir /srv/shiny-server/sample-apps/sudoku_solver
 COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
 
+# create explicit mount point for shared docker volume and make accesible for shiny server user 'shiny'
+RUN mkdir /sudoku_volume
+RUN chown shiny:shiny /sudoku_volume
+
 EXPOSE 3838
