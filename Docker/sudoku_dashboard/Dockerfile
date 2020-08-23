@@ -7,7 +7,7 @@ RUN apt-get install -y libssl-dev
 RUN R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/shiny/shiny_1.3.2.tar.gz', repos=NULL,type='source')"
 RUN R -e "install.packages('https://cran.r-project.org/src/contrib/shinythemes_1.1.2.tar.gz', repos=NULL,type='source')"
 RUN R -e "install.packages('https://cran.r-project.org/src/contrib/shinyMatrix_0.3.0.tar.gz', repos=NULL,type='source')"
-RUN R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/DT/DT_0.13.tar.gz', repos=NULL,type='source')"
+RUN R -e "install.packages('DT')"
 
 RUN mkdir /srv/shiny-server/sample-apps/sudoku_solver
 COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
