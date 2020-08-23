@@ -1,9 +1,13 @@
-FROM rocker/shiny:3.6.0
+FROM rocker/shiny:3.6.3
 
 RUN apt-get update
 RUN apt-get install -y libssl-dev
 
-RUN R -e "install.packages(c('httr', 'shinythemes', 'shinyMatrix','DT'),repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('devtools')"
+RUN R -e "devtools::install_version('shiny', version = '1.3.2', repos = 'http://cran.us.r-project.org',upgrade = 'never')"
+RUN R -e "devtools::install_version('shinythemes', version = '1.1.2', repos = 'http://cran.us.r-project.org',upgrade = 'never')"
+RUN R -e "devtools::install_version('shinyMatrix', version = '0.3.0', repos = 'http://cran.us.r-project.org',upgrade = 'never')"
+RUN R -e "devtools::install_version('DT', version = '0.13', repos = 'http://cran.us.r-project.org',upgrade = 'never')"
 
 RUN mkdir /srv/shiny-server/sample-apps/sudoku_solver
 COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
