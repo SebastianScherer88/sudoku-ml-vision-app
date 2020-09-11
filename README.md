@@ -2,7 +2,7 @@
 
 Hello there, and thanks for checking out this project!
 
-This repo contains all the code (and some instructions on the hosting setup) for a [**remotely AWS hosted sudoku solving application**](http://ec2-18-133-156-139.eu-west-2.compute.amazonaws.com:3838/sample-apps/sudoku_solver/:3838/sample-apps/sudoku_solver/) written in Python and R.
+This repo contains all the code (and some instructions on the hosting setup) for a [**remotely AWS hosted sudoku solving application**](http://ec2-18-133-156-139.eu-west-2.compute.amazonaws.com:3838/sample-apps/sudoku_solver/) written in Python and R.
 
 The updated version now also contains an image recognition module that allows the user to upload pictures of initial sudokus to the app.
 
