@@ -27,13 +27,15 @@ Please note that on your mobile, the
 
 ### Hosting
 
-The GUI (Graphic User Interface) you are seeing in front of you was written with R package [shiny](https://shiny.rstudio.com/). At the time of writing, it is hosted on one of the smaller AWS machines via the community editions of [Rstudio server](https://rstudio.com/products/rstudio/download-server/) and [R shiny server](https://rstudio.com/products/shiny/shiny-server/).
+The GUI (Graphic User Interface) you are seeing in front of you was written with R package [shiny](https://shiny.rstudio.com/). At the time of writing, it is hosted on one of the smaller AWS machines via the community edition [R shiny server](https://rstudio.com/products/shiny/shiny-server/).
 
 ### Backend
 
 The backend, i.e. the logic actually solving your input sudoku, is wrapped in a RestAPI written in python and the [fastAPI package](https://fastapi.tiangolo.com/). It has fantastic documentation and great integration with other related packages. 
 
 This RestAPI is also hosted on the same AWS machine, but only locally.
+
+I used Docker Compose to package the application's frontend and backend into one connected portable application.
 
 ### Resources and credits
 
