@@ -1,0 +1,10 @@
+api:
+  container_port: '8000'
+  host_port: '8000'
+  service_name: model_api
+  shared_drive: /sudoku_volume
+dashboard:
+  container_port: '3838'
+  host_port: '3838'
+  service_name: dashboard
+  shared_drive: /sudoku_volume

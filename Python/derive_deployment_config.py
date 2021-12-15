@@ -9,7 +9,7 @@ of the docker network when making cross-container service calls.
 import yaml
 
 with open('../Docker/docker-compose.yaml','r') as docker_compose_file:
-    docker_compose_config = yaml.load(docker_compose_file)
+    docker_compose_config = yaml.load(docker_compose_file,Loader=yaml.FullLoader)
     
 deployment_config = {}
 
