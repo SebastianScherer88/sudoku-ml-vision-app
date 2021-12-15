@@ -10,10 +10,14 @@ RUN R -e "install.packages('https://cran.r-project.org/src/contrib/shinyMatrix_0
 RUN R -e "install.packages('DT')"
 RUN R -e "install.packages('httr')"
 
-RUN mkdir /srv/shiny-server/sample-apps/sudoku_solver
-COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
-COPY ./Docker/deployment_config.yaml /srv/shiny-server/sample-apps/sudoku_solver/
-RUN chown shiny:shiny ./srv/shiny-server/sample-apps/sudoku_solver/deployment_config.yaml
+#RUN mkdir /srv/shiny-server/sample-apps/sudoku_solver
+#COPY ./R/r_shiny_app/* /srv/shiny-server/sample-apps/sudoku_solver/
+COPY ./R/r_shiny_app/* /srv/shiny-server/
+
+#COPY ./Docker/deployment_config.yaml /srv/shiny-server/sample-apps/sudoku_solver/
+COPY ./Docker/deployment_config.yaml /srv/shiny-server/
+#RUN chown shiny:shiny ./srv/shiny-server/sample-apps/sudoku_solver/deployment_config.yaml
+RUN chown shiny:shiny ./srv/shiny-server/deployment_config.yaml
 
 # create explicit mount point for shared docker volume and make accesible for shiny server user 'shiny'
 RUN mkdir /sudoku_volume
