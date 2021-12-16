@@ -4,9 +4,9 @@ FROM rocker/shiny:3.6.3
 RUN apt-get --allow-releaseinfo-change update
 RUN apt-get install -y libssl-dev
 
-RUN R -e "install.packages('shiny')"
-RUN R -e "install.packages('shinythemes')"
-RUN R -e "install.packages('shinyMatrix')"
+RUN R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/shiny/shiny_1.3.2.tar.gz', repos=NULL,type='source')"
+RUN R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/shinythemes/shinythemes_1.1.2.tar.gz',repos=NULL,type='source')"
+RUN R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/shinyMatrix/shinyMatrix_0.3.0.tar.gz',repos=NULL,type='source')"
 RUN R -e "install.packages('DT')"
 RUN R -e "install.packages('httr')"
 
