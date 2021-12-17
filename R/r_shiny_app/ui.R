@@ -30,6 +30,8 @@ ui <- navbarPage(
                              value = matrix(data = NA,
                                             nrow = 9,
                                             ncol = 9),
+                             rows = list(names = FALSE),
+                             cols = list(names = FALSE),
                              class = 'character'),
                  fileInput('initial_picture_upload','Upload picture')),
           column(width = 1,
