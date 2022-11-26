@@ -10,13 +10,20 @@ import random
 import os
 
 from s3fs import S3FileSystem
-import patoolib
+from unrar import rarfile
 
-from model.settings import (
-    IMAGE_SOURCE_DATA_DIR, IMAGE_SYNTHETIC_DATA_DIR, RANDOM_SEED,
-    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE, S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR,
-    BLANK_IMAGE_DIR, N_BLANK_IMAGES, BLANK_DIGIT,
-    ROTATED_IMAGE_DIR, N_ROTATED_IMAGES_PER_DIGIT, ANGLE_RANGE
+from ml.settings import (
+    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, 
+    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE, 
+    S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR,
+    IMAGE_SOURCE_DATA_DIR, 
+    IMAGE_SYNTHETIC_DATA_DIR, 
+    RANDOM_SEED,
+    BLANK_IMAGE_DIR,
+    N_BLANK_IMAGES, BLANK_DIGIT,
+    ROTATED_IMAGE_DIR, 
+    N_ROTATED_IMAGES_PER_DIGIT, 
+    ANGLE_RANGE
 )
 
 random.seed(RANDOM_SEED)
@@ -36,29 +43,31 @@ def extract_rar_source_image_data() -> Union[Path,str]:
 
     # create temporary local dir
     local_temp_dir = './temp'
-    os.mkdir(local_temp_dir)    
+    
+    if not os.path.exists(local_temp_dir):
+        os.mkdir(local_temp_dir)    
 
     # download .rar data archive from s3 into local dir
-    rar_source_image_data_s3 = '/'.join(S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+    rar_source_image_data_s3 = f'{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE}'
+    rar_source_image_data_local = os.path.join(local_temp_dir,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+    
     s3_file_system = S3FileSystem()
-
-    s3_file_system.get(rpath=rar_source_image_data_s3,lpath=local_temp_dir)
-
-    # capture local location of .rar archive
-    local_image_data_rar = os.path.join(local_temp_dir,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+    s3_file_system.download(rpath=rar_source_image_data_s3,lpath=rar_source_image_data_local)
 
     # specify local location of extracted data dir
     extracted_image_classifciation_data_dir = S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE.replace('.rar','')
     local_image_data_dir = os.path.join(local_temp_dir,extracted_image_classifciation_data_dir)
 
     # extract data
-    patoolib.extract_archive(local_image_data_rar, outdir=local_image_data_dir)
+    rar_file = rarfile.RarFile(rar_source_image_data_local)
+    rar_file.extractall(local_image_data_dir)
+    #patoolib.extract_archive(rar_source_image_data_local, outdir=local_image_data_dir)
 
     # upload extracted data back to s3
     s3_file_system.put(lpath=local_image_data_dir, rpath=S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR)
 
     # delete local files
-    os.removedirs(local_image_data_dir)
+    os.removedirs(local_temp_dir)
 
     return S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR
 
@@ -150,7 +159,7 @@ def rotate_image(digit_image: Image,
 
 def create_rotated_images(source_image_inventory: pd.DataFrame) -> pd.DataFrame:
 
-    rotated_dir = os.path.join(IMAGE_SYNTHETIC_DATA_DIR,ROTATED_IMAGE_DIR)
+    rotated_dir = os.path.join([IMAGE_SYNTHETIC_DATA_DIR,ROTATED_IMAGE_DIR])
 
     if not os.path.exists(rotated_dir):
         os.makedirs(rotated_dir)
@@ -180,18 +189,21 @@ def create_rotated_images(source_image_inventory: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
+    
+    extract_rar_source_image_data()
 
-    # get all image data inventory
-    source_image_inventory = get_source_image_inventory()
+    # # get all image data inventory
+    # source_image_inventory = get_source_image_inventory()
 
-    # add blanks as pseudo digit 10 in new source subdirectory
-    blank_image_inventory = create_blank_images(source_image_inventory)
+    # # add blanks as pseudo digit 10 in new source subdirectory
+    # blank_image_inventory = create_blank_images(source_image_inventory)
 
-    # add rotated images for digit 1-9 in existing subdirectories
-    rotated_image_inventory = create_rotated_images(source_image_inventory)
+    # # add rotated images for digit 1-9 in existing subdirectories
+    # rotated_image_inventory = create_rotated_images(source_image_inventory)
 
-    all_images_inventory = pd.concat([source_image_inventory,blank_image_inventory,rotated_image_inventory]).reset_index()
-    all_images_inventory.to_csv(os.path.join(IMAGE_SYNTHETIC_DATA_DIR,'all_image_inventory.csv'),index=False)
+    # all_images_inventory = pd.concat([source_image_inventory,blank_image_inventory,rotated_image_inventory]).reset_index()
+    # all_images_inventory.to_csv(os.path.join(IMAGE_SYNTHETIC_DATA_DIR,'all_image_inventory.csv'),index=False)
 
 
-main()
+if __name__ == '__main__':
+    main()

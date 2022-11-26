@@ -6,3 +6,4 @@ Pillow==9.3.0
 numpy==1.21.6
 tensorflow==2.11.0
 keras
+unrar==0.4
