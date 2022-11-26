@@ -9,8 +9,12 @@ import random
 
 import os
 
+from s3fs import S3FileSystem
+import patoolib
+
 from model.settings import (
     IMAGE_SOURCE_DATA_DIR, IMAGE_SYNTHETIC_DATA_DIR, RANDOM_SEED,
+    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE, S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR,
     BLANK_IMAGE_DIR, N_BLANK_IMAGES, BLANK_DIGIT,
     ROTATED_IMAGE_DIR, N_ROTATED_IMAGES_PER_DIGIT, ANGLE_RANGE
 )
@@ -22,6 +26,41 @@ class ImageFile(BaseModel):
     file_name: str
     file_path: Path
     rotation_angle: int = 0
+
+
+def extract_rar_source_image_data() -> Union[Path,str]:
+    '''
+    Unzips the source .tar file in the specified s3 directory and saves the unzipped folder in the same location.
+    Returns the full s3 path to the unzipped directory.
+    '''
+
+    # create temporary local dir
+    local_temp_dir = './temp'
+    os.mkdir(local_temp_dir)    
+
+    # download .rar data archive from s3 into local dir
+    rar_source_image_data_s3 = '/'.join(S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+    s3_file_system = S3FileSystem()
+
+    s3_file_system.get(rpath=rar_source_image_data_s3,lpath=local_temp_dir)
+
+    # capture local location of .rar archive
+    local_image_data_rar = os.path.join(local_temp_dir,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+
+    # specify local location of extracted data dir
+    extracted_image_classifciation_data_dir = S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE.replace('.rar','')
+    local_image_data_dir = os.path.join(local_temp_dir,extracted_image_classifciation_data_dir)
+
+    # extract data
+    patoolib.extract_archive(local_image_data_rar, outdir=local_image_data_dir)
+
+    # upload extracted data back to s3
+    s3_file_system.put(lpath=local_image_data_dir, rpath=S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR)
+
+    # delete local files
+    os.removedirs(local_image_data_dir)
+
+    return S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR
 
 
 def get_source_image_inventory(digit_range: List[int] = [0,1,2,3,4,5,6,7,8,9]) -> pd.DataFrame:

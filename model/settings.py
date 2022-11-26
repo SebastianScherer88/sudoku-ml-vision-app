@@ -1,3 +1,15 @@
+S3_DATA_BUCKET = 'bettmensch88-aws-dev-bucket'
+S3_PROJECT_DIR = 'sudoku-ml-vision'
+
+S3_CELL_DIGIT_CLASSIFICATION_DIR = '/'.join(S3_PROJECT_DIR,'cell-digit-classification')
+S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR = '/'.join(S3_CELL_DIGIT_CLASSIFICATION_DIR,'source')
+S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE = '250000_Final.rar'
+S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR = '/'.join(S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR,'250000_Final')
+
+S3_CELL_DIGIT_CLASSIFICATION_SYNTHETIC_DIR = '/'.join(S3_CELL_DIGIT_CLASSIFICATION_DIR,'synthetic')
+
+S3_IMAGE_SEGMENTATION_DIR = '/'.join(S3_PROJECT_DIR,'image-segmentation')
+
 IMAGE_SOURCE_DATA_DIR = 'C:/Users/Sebastian.Scherer/Projects/sudoku_solver/data/digit_classification/source/250000_Final'
 IMAGE_SYNTHETIC_DATA_DIR = 'C:/Users/Sebastian.Scherer/Projects/sudoku_solver/data/digit_classification/synthetic'
 

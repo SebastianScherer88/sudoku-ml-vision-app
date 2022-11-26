@@ -1,7 +1,1 @@
-pandas
-numpy
-tensorflow
-keras
 opencv-python
-pydantic
-Pillow
