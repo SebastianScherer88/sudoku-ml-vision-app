@@ -1,0 +1,13 @@
+click==7.1.2
+fastapi==0.54.2
+h5py==2.10.0
+Keras==2.3.1
+opencv-python==4.2.0.34
+opt-einsum==3.3.0
+PuLP==1.6.8
+pydantic==1.6
+PyYAML==5.3.1
+requests==2.24.0
+tensorboard==2.0.2
+tensorflow==2.0.0
+tensorflow-estimator==2.0.1

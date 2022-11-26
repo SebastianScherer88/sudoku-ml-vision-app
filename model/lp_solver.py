@@ -138,7 +138,7 @@ sudokuout.close()
 print("Solution Written to sudokuout.txt")
 
 # --- test rest api
-from sudoku_solver_api import InitialValueConstraint,InitialValueConstraints
+from app.sudoku_model_api.sudoku_solver_api import InitialValueConstraint,InitialValueConstraints
 import requests
 
 constraints = [
