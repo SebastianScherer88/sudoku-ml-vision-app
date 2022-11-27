@@ -224,7 +224,8 @@ def create_blank_images_tf_data(perc_blank_images_train: float = 0.1,
         # load local data exported in previous step
         data_tf = tf.data.Dataset.load(os.path.join(LOCAL_TEMP_DIR,data_split))
         
-        for batch in data_tf:
+        for image_batch, target_batch in data_tf:
+            
         
 
     # blank_images = []
