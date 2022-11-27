@@ -8,14 +8,27 @@ from pathlib import Path
 import random
 
 import os
+import shutil
 
 from s3fs import S3FileSystem
-#from unrar import rarfile
+from boto3 import s3
+import tensorflow as tf
+
+from logging import getLogger
 
 from ml.settings import (
+    LOG_LEVEL,
+    LOCAL_TEMP_DIR,
     S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, 
-    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE, 
-    S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR,
+    S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE,
+    IMAGE_RECORD_DATASETS_DIMENSION,
+    IMAGE_RECORD_DATASETS_BATCH_SIZE,
+    S3_CELL_DIGIT_CLASSIFICATION_TF_DIR,
+    S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN,
+    S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE,
+    S3_CELL_DIGIT_CLASSIFICATION_BLANK_TF_DIR,
+    S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_BLANK,
+    S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE_BLANK,
     IMAGE_SOURCE_DATA_DIR, 
     IMAGE_SYNTHETIC_DATA_DIR, 
     RANDOM_SEED,
@@ -28,6 +41,9 @@ from ml.settings import (
 
 random.seed(RANDOM_SEED)
 
+logger = getLogger('processing')
+logger.setLevel(LOG_LEVEL)
+
 class ImageFile(BaseModel):
     digit: int
     file_name: str
@@ -35,41 +51,114 @@ class ImageFile(BaseModel):
     rotation_angle: int = 0
 
 
-def extract_rar_source_image_data() -> Union[Path,str]:
+def create_local_temp_dir():
+    
+    # create temporary local dir
+    if not os.path.exists(LOCAL_TEMP_DIR):
+        os.mkdir(LOCAL_TEMP_DIR)
+        logger.info(f'Created local temp directory {LOCAL_TEMP_DIR}')
+        print(f'Created local temp directory {LOCAL_TEMP_DIR}')
+        
+def clean_up_local_temp_dir():
+    
+    # delete local temp dir and content
+    shutil.rmtree(LOCAL_TEMP_DIR, ignore_errors=True)
+    logger.info(f'Removed local temporary directory {LOCAL_TEMP_DIR} and all its contents.')
+    print(f'Removed local temporary directory {LOCAL_TEMP_DIR} and all its contents.')
+
+def download_and_extract_rar_image_file(clean_up: bool = True) -> Union[Path,str]:
     '''
     Unzips the source .tar file in the specified s3 directory and saves the unzipped folder in the same location.
-    Returns the full s3 path to the unzipped directory.
+    Returns the full s3 path to the tf records data file containing the archive content.
     '''
 
-    # create temporary local dir
-    local_temp_dir = './temp'
-    
-    if not os.path.exists(local_temp_dir):
-        os.mkdir(local_temp_dir)    
+    create_local_temp_dir()
 
-    # download .rar data archive from s3 into local dir
-    rar_source_image_data_s3 = f'{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE}'
-    rar_source_image_data_local = os.path.join(local_temp_dir,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
-    
+    # download .rar data archive from s3 into local dir if not already there
+    rar_source_image_data_local = os.path.join(LOCAL_TEMP_DIR,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
+
     s3_file_system = S3FileSystem()
-    s3_file_system.download(rpath=rar_source_image_data_s3,lpath=rar_source_image_data_local)
 
-    # specify local location of extracted data dir
+    if not os.path.isfile(rar_source_image_data_local):
+        rar_source_image_data_s3 = f'{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE}'
+    
+        s3_file_system.download(rpath=rar_source_image_data_s3,lpath=rar_source_image_data_local)
+        logger.info(f'Downloaded image .rar data file from {rar_source_image_data_s3} into {rar_source_image_data_local}')
+        print(f'Downloaded image .rar data file from {rar_source_image_data_s3} into {rar_source_image_data_local}')
+
+    # # extract data into local ./temp/10000 dir
+    os.system(f'cd {LOCAL_TEMP_DIR}; 7z x {S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE}')
+    
+    # assemble tf dataset from image data directory structure
     extracted_image_classifciation_data_dir = S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE.replace('.rar','')
-    local_image_data_dir = os.path.join(local_temp_dir,extracted_image_classifciation_data_dir)
+    local_image_data_dir = os.path.join(LOCAL_TEMP_DIR,extracted_image_classifciation_data_dir)
+    logger.info(f'Extracted image .rar data file from {rar_source_image_data_local} into {local_image_data_dir}')
+    print(f'Extracted image .rar data file from {rar_source_image_data_local} into {local_image_data_dir}')
+    
+    tf_train = tf.keras.utils.image_dataset_from_directory(
+        directory=local_image_data_dir,
+        labels='inferred',
+        label_mode='int',
+        color_mode='rgb',
+        batch_size=IMAGE_RECORD_DATASETS_BATCH_SIZE,
+        image_size=IMAGE_RECORD_DATASETS_DIMENSION,
+        validation_split=0.2,
+        subset="training",
+        seed=123,
+        interpolation='bilinear',
+        follow_links=False,
+        crop_to_aspect_ratio=False,
+    )
+    
+    tf_validate = tf.keras.utils.image_dataset_from_directory(
+        directory=local_image_data_dir,
+        labels='inferred',
+        label_mode='int',
+        color_mode='rgb',
+        batch_size=IMAGE_RECORD_DATASETS_BATCH_SIZE,
+        image_size=IMAGE_RECORD_DATASETS_DIMENSION,
+        validation_split=0.2,
+        subset="validation",
+        seed=123,
+        interpolation='bilinear',
+        follow_links=False,
+        crop_to_aspect_ratio=False,
+    )
+    
+    # export tf datasets locally
+    local_tf_train = os.path.join(LOCAL_TEMP_DIR,S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN)
+    tf_train.save(local_tf_train)
+    logger.info(f'Built tensorflow records data set and exported locally to {local_tf_train}.')
+    print(f'Built tensorflow records data set and exported locally to {local_tf_train}.')
+    
+    local_tf_validate = os.path.join(LOCAL_TEMP_DIR,S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE)
+    tf_validate.save(local_tf_validate)
+    logger.info(f'Built tensorflow records data set and exported locally to {local_tf_validate}.')
+    print(f'Built tensorflow records data set and exported locally to {local_tf_validate}.')
 
-    # extract data
-    rar_file = rarfile.RarFile(rar_source_image_data_local)
-    rar_file.extractall(local_image_data_dir)
-    #patoolib.extract_archive(rar_source_image_data_local, outdir=local_image_data_dir)
 
+    # upload local tf datasets back to s3
+    s3_tf_train = f'{S3_CELL_DIGIT_CLASSIFICATION_TF_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN}'
+    s3_file_system.put(lpath=local_tf_train, 
+                       rpath=s3_tf_train,
+                       recursive=True)
+    
+    logger.info(f'Uploaded tensorflow records data set and exported to {s3_tf_train}.')
+    print(f'Uploaded tensorflow records data set and exported to {s3_tf_train}.')
+    
     # upload extracted data back to s3
-    s3_file_system.put(lpath=local_image_data_dir, rpath=S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR)
+    s3_tf_validate = f'{S3_CELL_DIGIT_CLASSIFICATION_TF_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE}'
+    s3_file_system.put(lpath=local_tf_train, 
+                       rpath=s3_tf_validate,
+                       recursive=True)
+    
+    logger.info(f'Uploaded tensorflow records data set and exported to {s3_tf_validate}.')
+    print(f'Uploaded tensorflow records data set and exported to {s3_tf_validate}.')
 
-    # delete local files
-    os.removedirs(local_temp_dir)
+    if clean_up:
+        clean_up_local_temp_dir()
 
-    return S3_CELL_DIGIT_CLASSIFICATION_EXTRACTED_SOURCE_DIR
+    return (s3_tf_train,s3_tf_validate)
 
 
 def get_source_image_inventory(digit_range: List[int] = [0,1,2,3,4,5,6,7,8,9]) -> pd.DataFrame:
@@ -103,47 +192,64 @@ def get_source_image_inventory(digit_range: List[int] = [0,1,2,3,4,5,6,7,8,9]) -
 
     return pd.DataFrame([image.dict() for image in images])
 
-def create_blank_image(digit_image: Image) -> Image:
+def create_blank_image_from_image(image: Image) -> Image:
     '''
     Takes a real digit source image, randomly picks a spot to infer a background color and creates a blank image of the same size.
     '''
 
-    image_width, image_height = digit_image.width, digit_image.height
+    image = Image.fromarray((image * 255).astype(np.uint8))
+    
+    image_width, image_height = image.width, image.height
 
     image_sample_spot = (random.choice(range(image_width)), random.choice(range(image_height)))
-    image_spot_color = digit_image.getpixel(image_sample_spot)
+    image_spot_color = image.getpixel(image_sample_spot)
 
     blank_image = Image.new(mode='RGB', size=(image_width, image_height),color=image_spot_color)
+    
 
     return blank_image
 
-def create_blank_images(source_image_inventory: pd.DataFrame) -> pd.DataFrame:
+def create_blank_images_tf_data(perc_blank_images_train: float = 0.1,
+                                perc_blank_images_validate: float = 0.1,
+                                clean_up: bool = True) -> pd.DataFrame:
     '''
-    Creats blank image files and exports them to the same image source data dir as the original image files, in an extra directory named '10' encoding the 'blank' pseudo digit.
+    Creates and uploads train and validate tf data sets of specified size to s3.
     '''
 
-    blank_digit_dir = os.path.join(IMAGE_SYNTHETIC_DATA_DIR,BLANK_IMAGE_DIR)
+    s3_blank_train_tf = f'{S3_CELL_DIGIT_CLASSIFICATION_BLANK_TF_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_BLANK}'
+    s3_blank_avlidate_tf = f'{S3_CELL_DIGIT_CLASSIFICATION_BLANK_TF_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE_BLANK}'
+        
+    for data_split in (S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN, S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE):
+        
+        # load local data exported in previous step
+        data_tf = tf.data.Dataset.load(os.path.join(LOCAL_TEMP_DIR,data_split))
+        
+        for batch in data_tf:
+        
 
-    blank_images = []
+    # blank_images = []
+    
+    # counter = 0
 
-    counter = 0
+    # if not os.path.exists(blank_digit_dir):
+    #     os.makedirs(blank_digit_dir)
 
-    if not os.path.exists(blank_digit_dir):
-        os.makedirs(blank_digit_dir)
+    # for index, image_file in source_image_inventory.iterrows():
+    #     image = Image.open(image_file['file_path'])
+    #     blank_image = create_blank_image(image)
+    #     blank_image_file_name = f"blank_{image_file['file_name']}"
+    #     blank_image_file_path = os.path.join(blank_digit_dir,blank_image_file_name)
+    #     blank_image.save(blank_image_file_path)
 
-    for index, image_file in source_image_inventory.iterrows():
-        image = Image.open(image_file['file_path'])
-        blank_image = create_blank_image(image)
-        blank_image_file_name = f"blank_{image_file['file_name']}"
-        blank_image_file_path = os.path.join(blank_digit_dir,blank_image_file_name)
-        blank_image.save(blank_image_file_path)
+    #     blank_images.append(ImageFile(digit=BLANK_DIGIT,file_name=blank_image_file_name,file_path=blank_image_file_path))
 
-        blank_images.append(ImageFile(digit=BLANK_DIGIT,file_name=blank_image_file_name,file_path=blank_image_file_path))
+    #     counter += 1
 
-        counter += 1
+    #     if counter >= N_BLANK_IMAGES:
+    #         break
 
-        if counter >= N_BLANK_IMAGES:
-            break
+    if clean_up:
+        clean_up_local_temp_dir()
 
     return pd.DataFrame([blank_image.dict() for blank_image in blank_images])
 
@@ -190,7 +296,7 @@ def create_rotated_images(source_image_inventory: pd.DataFrame) -> pd.DataFrame:
 
 def main():
     
-    extract_rar_source_image_data()
+    download_and_extract_rar_image_file(clean_up=True)
 
     # # get all image data inventory
     # source_image_inventory = get_source_image_inventory()
