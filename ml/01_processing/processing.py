@@ -10,7 +10,7 @@ import random
 import os
 
 from s3fs import S3FileSystem
-from unrar import rarfile
+#from unrar import rarfile
 
 from ml.settings import (
     S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, 
