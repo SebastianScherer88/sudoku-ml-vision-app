@@ -1,7 +1,10 @@
-from logging import DEBUG, INFO, WARNING
+import logging
 
 # processing
-LOG_LEVEL = DEBUG
+LOG_LEVEL = logging.DEBUG
+
+logger = logging.getLogger('processing')
+logger.setLevel(LOG_LEVEL)
 
 LOCAL_TEMP_DIR = './temporary'
 
@@ -18,10 +21,11 @@ S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE = '10000.rar'
 
 # tf train & validate records dataset
 IMAGE_RECORD_DATASETS_DIMENSION = (100,100)
+IMAGE_CHANNEL_N = 3
 IMAGE_RECORD_DATASETS_BATCH_SIZE = 32
-S3_CELL_DIGIT_CLASSIFICATION_TF_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}/train_validate_tf'
-S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN = 'train_tf'
-S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE = 'validate_tf'
+S3_CELL_DIGIT_CLASSIFICATION_TF_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}/train_validate_original_tf'
+S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN = 'train_original_tf'
+S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE = 'validate_original_tf'
 
 # tf rotations train & validate tf records dataset
 S3_CELL_DIGIT_CLASSIFICATION_ROTATED_TF_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}/rotated_train_tf'
@@ -32,20 +36,16 @@ S3_CELL_DIGIT_CLASSIFICATION_BLANK_TF_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}
 S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_BLANK = 'blank_train_tf'
 S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE_BLANK = 'blank_validate_tf'
 
+# tf all images train & validate dataset
+S3_CELL_DIGIT_CLASSIFICATION_BLANK_TF_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}/all_tf'
+S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_ALL = 'train_tf'
+S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE_ALL = 'validate_tf'
+
 
 S3_IMAGE_SEGMENTATION_DIR = f'{S3_PROJECT_DIR}/image-segmentation'
 
-IMAGE_SOURCE_DATA_DIR = 'C:/Users/Sebastian.Scherer/Projects/sudoku_solver/data/digit_classification/source/250000_Final'
-IMAGE_SYNTHETIC_DATA_DIR = 'C:/Users/Sebastian.Scherer/Projects/sudoku_solver/data/digit_classification/synthetic'
 
 RANDOM_SEED = 35
 
-BLANK_IMAGE_DIR = 'blank'
-BLANK_DIGIT = 10
-N_BLANK_IMAGES = 2000
-
-ROTATED_IMAGE_DIR = 'rotated'
-N_ROTATED_IMAGES_PER_DIGIT = 2000
-ANGLE_RANGE = (10, 45)
-
 # modelling
+MODEL_DIR = 'ml_models'
