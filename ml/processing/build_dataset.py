@@ -1,26 +1,20 @@
 import numpy as np
 import pandas as pd
-from PIL import Image
 
-from typing import Union, List, Tuple
-from pydantic import BaseModel
+from typing import Union
 from pathlib import Path
 import random
-import matplotlib.pyplot as plt
 
 import os
 import shutil
 
-from s3fs import S3FileSystem
-from boto3 import s3
+import boto3
 import tensorflow as tf
 import tensorflow_addons as tfa
 
-from logging import getLogger
-
 from ml.settings import (
-    LOG_LEVEL,
     LOCAL_TEMP_DIR,
+    S3_DATA_BUCKET,
     S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, 
     S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE,
     IMAGE_RECORD_DATASETS_DIMENSION,
@@ -57,7 +51,8 @@ def clean_up_local_temp_dir():
     shutil.rmtree(LOCAL_TEMP_DIR, ignore_errors=True)
     logger.info(f'Removed local temporary directory {LOCAL_TEMP_DIR} and all its contents.')
     print(f'Removed local temporary directory {LOCAL_TEMP_DIR} and all its contents.')
-
+    
+                
 def download_and_extract_rar_image_file() -> Union[Path,str]:
     '''
     Unzips the source .tar file in the specified s3 directory and saves the unzipped folder in the same location.
@@ -67,11 +62,11 @@ def download_and_extract_rar_image_file() -> Union[Path,str]:
     # download .rar data archive from s3 into local dir if not already there
     rar_source_image_data_local = os.path.join(LOCAL_TEMP_DIR,S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE)
 
-    s3_file_system = S3FileSystem()
-
+    s3_client = boto3.client('s3')    
     rar_source_image_data_s3 = f'{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR}/{S3_CELL_DIGIT_CLASSIFICATION_SOURCE_FILE}'
 
-    s3_file_system.download(rpath=rar_source_image_data_s3,lpath=rar_source_image_data_local)
+    s3_client.download_file(S3_DATA_BUCKET,rar_source_image_data_s3,rar_source_image_data_local)
+
     logger.info(f'Downloaded image .rar data file from {rar_source_image_data_s3} into {rar_source_image_data_local}')
 
     # # extract data into local ./temp/10000 dir

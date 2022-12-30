@@ -9,10 +9,10 @@ logger.setLevel(LOG_LEVEL)
 LOCAL_TEMP_DIR = './temporary'
 
 # bucket
-S3_DATA_BUCKET = 's3://bettmensch88-aws-dev-bucket'
+S3_DATA_BUCKET = 'bettmensch88-aws-dev-bucket'
 
 # bucket dirs & files
-S3_PROJECT_DIR = f'{S3_DATA_BUCKET}/sudoku-ml-vision'
+S3_PROJECT_DIR = 'sudoku-ml-vision'
 
 # rar file
 S3_CELL_DIGIT_CLASSIFICATION_DIR = f'{S3_PROJECT_DIR}/cell-digit-classification'
@@ -49,3 +49,4 @@ RANDOM_SEED = 35
 
 # modelling
 MODEL_DIR = 'ml_models'
+S3_MODEL_REGISTER = f'{S3_PROJECT_DIR}/{MODEL_DIR}'
