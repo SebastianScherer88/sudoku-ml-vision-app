@@ -152,9 +152,6 @@ def blank_images(image_tensor_batch, image_label_batch):
     blanked_image_tensor_batch = tfa.image.gaussian_filter2d(image_tensor_batch,
                                                              sigma = 100)
     
-    import pdb
-    pdb.set_trace()
-    
     blanked_image_label_batch = image_label_batch * 0 + 10
     
     return blanked_image_tensor_batch, blanked_image_label_batch
@@ -236,9 +233,17 @@ def combine_data_sets(train_original,
 
 def normalize_image(image_array):
     
-    image_array = (image_array - np.mean(image_array)) / np.std(image_array)
-    
-    return image_array
+    if len(image_array.shape) == 4:
+        width_height_dims = (1,2)
+    elif len(image_array.shape) == 3:
+        width_height_dims = (0, 1)
+        
+    array_mean = np.expand_dims(image_array.mean(axis=width_height_dims),axis=width_height_dims)
+    array_std = np.expand_dims(image_array.std(axis=width_height_dims),axis=width_height_dims)
+        
+    normalized_array = (image_array - array_mean) / array_std
+        
+    return normalized_array
 
 
 def main():

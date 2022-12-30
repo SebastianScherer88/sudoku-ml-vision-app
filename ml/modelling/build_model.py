@@ -97,6 +97,12 @@ def build_model(model,
     history_path = os.path.join(model_version_dir,'history.csv')
     history_nice.to_csv(history_path,index=False)
     
+    index_label_map = dict([(i, str(i)) for i in range(10)])
+    index_label_map[0] = 'blank'
+    index_label_map_path = os.path.join(model_version_dir,'index_label_map.json')
+    with open(index_label_map_path,'w') as index_label_map_file:
+        json.dump(index_label_map, index_label_map_file)
+    
     fit_params_path = os.path.join(model_version_dir,'fit_params.json')
     with open(fit_params_path,'w') as fit_params_file:
         json.dump(fit_kwargs, fit_params_file)
