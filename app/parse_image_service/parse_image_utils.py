@@ -1,41 +1,73 @@
+import base64
+from typing import List, Tuple, Union
+
 import cv2
 import numpy as np
-from typing import List, Tuple, Union
-import os
 from pydantic import BaseModel, validator
+from pathlib import Path
 
-class SudokuImage(BaseModel):
 
-    image_path: str
+class ParseRequest(BaseModel):
+
+    instances: List[str] # strings are utf encodings of base64 encodings of image file bytes
+
+class ParsedImage(BaseModel):
     
-    @validator('image_path')
-    def check_file_exists(cls,v):
-        assert os.path.exists(v)
-        
-        return v
-    
-class FailedToParseSudokuImage(BaseModel):
     image_parsed: bool = False
+    parsed_cells: List[str] = ['',] * 81
     
-class SudokuImagePatch(BaseModel):
-    data: Union[List[List[Union[float,int]]],List[List[List[Union[float,int]]]]]
-    
-    @validator('data')
-    def convert_to_list(cls,v):
-        if isinstance(v,np.array):
-            v = v.tolist()
-            
-            return v
-    
-class ParsedSudokuImage(FailedToParseSudokuImage):
-    cell_patches: List[SudokuImagePatch]
-    
-    @validator('cell_patches')
-    def count_cell_patches(cls,v):
-        if len(v) != 81:
-            raise ValueError(f'The number of cell patches for a successfully parsed Sudoku image must be 81, not {v}')
+    @validator('parsed_cells')
+    def count_cell_patches(cls,parsed_cells):
+        if len(parsed_cells) != 81:
+            raise ValueError(f'The number of parsed cells for a successfully parsed Sudoku image must be 81, not {len(parsed_cells)}')
         
-        return v
+        return parsed_cells
+    
+class ParseResponse(BaseModel):
+    
+    instances: List[ParsedImage]
+    
+
+def decode_image_file_from_http(image_file_data: str):
+
+    # undo base64 encoding step
+    im_b = base64.b64decode(image_file_data)
+        
+    image_arr = np.frombuffer(im_b, np.uint8)
+    image = cv2.imdecode(image_arr, cv2.IMREAD_COLOR) # reads BGR color channel ordering (like the cv2.imread function - see above)
+        
+    return image
+
+def encode_image_file_for_http(image_file_path: Union[Path,str]) -> str:
+    '''
+    Takes a file from disk and applies encoding convention to allow image data to be
+    serialized to json.
+    Useful for sending image data via HTTP.
+    '''
+    
+    with open(image_file_path, 'rb') as open_file:
+        im_bytes = open_file.read()
+    
+    # base64 encoding
+    im_b64 = base64.b64encode(im_bytes)
+    
+    # utf decode so json can serialize it
+    im_b64_str = im_b64.decode("utf8")
+    
+    return im_b64_str
+
+def encode_images_for_http(images: List[np.array]) -> List[str]:
+    
+    encoded_images = []
+    
+    for i, image in enumerate(images):
+        temp_image_path = './temp_image_patch_{i}.png'
+        cv2.imwrite(temp_image_path,image)
+        encoded_image = encode_image_file_for_http(temp_image_path)
+        
+        encoded_images.append(encoded_image)
+        
+    return encoded_images
 
 def get_bounding_rect(contour_array: np.array,
                       image_shape: tuple,

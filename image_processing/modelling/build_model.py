@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 import os
-from ml.settings import (
+from image_processing.settings import (
     LOCAL_TEMP_DIR,
     S3_DATA_BUCKET,
     S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_ALL,
@@ -20,11 +20,11 @@ from keras.optimizers import Adam
 import boto3
 import json
 
-from ml.processing.build_dataset import normalize_image
+from image_processing.processing.build_model_dataset import normalize_image
 from utils.s3 import upload_directory
 
 from datetime import datetime
-from ml.settings import logger
+from image_processing.settings import logger
 import pandas as pd
 
 export_to_s3: bool = True

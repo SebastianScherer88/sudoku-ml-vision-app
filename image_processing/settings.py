@@ -14,6 +14,7 @@ S3_DATA_BUCKET = 'bettmensch88-aws-dev-bucket'
 # bucket dirs & files
 S3_PROJECT_DIR = 'sudoku-ml-vision'
 
+# [1] digit classification data
 # rar file
 S3_CELL_DIGIT_CLASSIFICATION_DIR = f'{S3_PROJECT_DIR}/cell-digit-classification'
 S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR = f'{S3_CELL_DIGIT_CLASSIFICATION_DIR}/source_rar'
@@ -42,11 +43,14 @@ S3_CELL_DIGIT_CLASSIFICATION_TF_TRAIN_ALL = 'train_tf'
 S3_CELL_DIGIT_CLASSIFICATION_TF_VALIDATE_ALL = 'validate_tf'
 
 
-S3_IMAGE_SEGMENTATION_DIR = f'{S3_PROJECT_DIR}/image-segmentation'
-
+# [2] grid parsing data
+S3_IMAGE_SEGMENTATION_DIR = f'{S3_PROJECT_DIR}/sudoku-grid-parsing'
+S3_SUDOKU_GRID_PARSING_SOURCE_DIR = f'{S3_IMAGE_SEGMENTATION_DIR}/source'
+S3_SUDOKU_GRID_PARSING_EXTRACT_DIR = f'{S3_IMAGE_SEGMENTATION_DIR}/manual-extracts'
 
 RANDOM_SEED = 35
 
+# [3] digit classification model
 # modelling
 MODEL_DIR = 'ml_models'
 S3_MODEL_REGISTER = f'{S3_PROJECT_DIR}/{MODEL_DIR}'

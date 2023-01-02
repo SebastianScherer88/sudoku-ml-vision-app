@@ -12,7 +12,7 @@ import boto3
 import tensorflow as tf
 import tensorflow_addons as tfa
 
-from ml.settings import (
+from image_processing.settings import (
     LOCAL_TEMP_DIR,
     S3_DATA_BUCKET,
     S3_CELL_DIGIT_CLASSIFICATION_SOURCE_DIR, 
@@ -35,7 +35,7 @@ from ml.settings import (
 
 random.seed(RANDOM_SEED)
 
-from ml.settings import logger
+from image_processing.settings import logger
 
 def create_local_temp_dir():
     

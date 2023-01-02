@@ -1,12 +1,11 @@
 from typing import Union
 from pathlib import Path
-import random
 
 import os
 
 import boto3
 
-from ml.settings import logger
+from image_processing.settings import logger
 
 def upload_directory(local_dir: Union[str,Path], s3_bucket: str, s3_dir: str):
     
@@ -75,3 +74,5 @@ def download_directory(s3_bucket: str, s3_dir: str, local_dir: Union[str,Path]):
             os.makedirs(local_file_dir)
             
         bucket.download_file(s3_file, local_file) # save to same path
+        
+        logger.debug(f'Downloaded from S3 at {s3_bucket}:{s3_file} to {local_file}')
