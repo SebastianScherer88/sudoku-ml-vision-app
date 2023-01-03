@@ -6,6 +6,8 @@ import numpy as np
 from pydantic import BaseModel, validator
 from pathlib import Path
 
+import pandas as pd
+
 
 class ParseRequest(BaseModel):
 
@@ -122,7 +124,7 @@ def preprocess_image(sudoku_image: np.array,
     
     # --- resize image
     if resize is None:
-        resize = int(sudoku_image.shape[0]/sudoku_image.shape[1] * 1000), 1000
+        resize = int(sudoku_image.shape[0]/sudoku_image.shape[1] * 500), 500
         
     resized_sudoku_image = cv2.resize(sudoku_image, resize)
     
@@ -132,7 +134,8 @@ def preprocess_image(sudoku_image: np.array,
         
     return resized_sudoku_image
 
-def extract_grid_cell_patches(sudoku_image: np.array):
+def extract_grid_cell_patches(sudoku_image: np.array,
+                              order_patches: bool = True):
         
     blur = cv2.GaussianBlur(sudoku_image, (5,5), 0)
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)    
@@ -207,5 +210,25 @@ def extract_grid_cell_patches(sudoku_image: np.array):
         mask_rect[cell_rect == 1] = sudoku_grid_patch[cell_rect == 1]
         image_patches.append(cv2.resize(sudoku_grid_patch[b1:b2,b3:b4],(100,100)))
         image_patch_coordinates.append(coords)
+        
+    if order_patches:
+        # assemble dataframe of image (meta) data
+        image_patch_df = pd.DataFrame(data = image_patch_coordinates,
+                                  columns = ['y_up','y_down','x_left','x_right'])
+        image_patch_df['image_patches'] = image_patches
+        image_patch_df['image_patch_coordinates'] = image_patch_coordinates
+        
+        # order by y coordinate, then by x coordinate
+        image_patch_df = image_patch_df.sort_values(by = ['y_up'],ascending = True)
+        image_patch_df['row_index'] = [i for i in range(9) for j in range(9)]
+        
+        image_patch_df = image_patch_df.sort_values(by = ['x_left'],ascending = True)
+        image_patch_df['column_index'] = [i for i in range(9) for j in range(9)]
+        
+        image_patch_df = image_patch_df.sort_values(['row_index','column_index'])
+        
+        # extract ordered image (meta) data
+        image_patches = image_patch_df['image_patches'].tolist()
+        image_patch_coordinates = image_patch_df['image_patch_coordinates'].tolist()
         
     return sudoku_grid_mask, mask_rect, image_patches, image_patch_coordinates
